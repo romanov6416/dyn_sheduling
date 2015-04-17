@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <random>
+#include <time.h>
 
 
 // ==================== class Task ====================
@@ -65,6 +66,7 @@ void System::printSheduling()
 	int curtime = 0;
 	for (unsigned i = 0; i < vExecTimes.size(); ++i)
 		vExecTimes[i] = -1;
+	srand(time(NULL));
 	while (curtime < runtime)
 	{
 		int mostPrior = -1;
