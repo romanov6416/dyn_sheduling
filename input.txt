@@ -1,0 +1,4 @@
+<system runtime=200>
+<task name="task1" period=50 duration=7>
+<task name="task2" period=100 duration=10>
+</system>

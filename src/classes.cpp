@@ -6,6 +6,7 @@
  */
 
 #include "classes.h"
+
 #include <vector>
 #include <fstream>
 #include <string>
@@ -109,6 +110,12 @@ void System::printSheduling(ostream & out)
 		// printing executing task
 		vTasks[chosenTask]->printXML(out, vExecTimes[chosenTask]);
 	}
+}
+
+System::~System()
+{
+	for (unsigned i = 0; i < vTasks.size(); ++i)
+		delete vTasks[i];
 }
 
 // ==================== End of class System ====================

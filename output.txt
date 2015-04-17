@@ -1,0 +1,6 @@
+<start name=task2 time=0>
+<start name=task1 time=10>
+<start name=task1 time=60>
+<start name=task2 time=100>
+<start name=task1 time=110>
+<start name=task1 time=160>

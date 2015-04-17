@@ -29,5 +29,6 @@ int main(int argc, char *argv[])
 		return 3;
 	}
 	system->printSheduling(output);
+	delete system;
 	return 0;
 }
