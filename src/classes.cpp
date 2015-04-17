@@ -16,6 +16,7 @@
 
 
 // ==================== class Task ====================
+
 Task::Task(const string & s, const int p, const int d) : name(s), period(p), duration(d), priority(p)
 {}
 
@@ -52,20 +53,25 @@ void Task::printXML(ostream & out, const int time)
 // ==================== End of class Task ====================
 
 
+
 // ==================== class System ====================
 
 System::System(const int time, vector<Task *> & v) :
 	runtime(time), vTasks(v)
 {}
 
-void System::printSheduling()
+void System::printSheduling(ostream & out)
 {
-	if (vTasks.size() == 0)
+	//
+	if (vTasks.empty())
 		return;
+	// last time, when tasks has init
 	vector<int> vExecTimes(vTasks.size());
 	int curtime = 0;
+	// in beginning all tasks must be executing, so init last time as "(-1) * period"
 	for (unsigned i = 0; i < vExecTimes.size(); ++i)
-		vExecTimes[i] = -1;
+		vExecTimes[i] = (-1) * vTasks[i]->getPeriod();
+	// random for choosing one of set the most important tasks
 	srand(time(NULL));
 	while (curtime < runtime)
 	{
@@ -73,14 +79,16 @@ void System::printSheduling()
 		vector<int> vNumberTask;
 		for (unsigned i = 0; i < vTasks.size(); ++i)
 		{
-			if (vExecTimes[i] < 0 || vTasks[i]->getPeriod() + vExecTimes[i] <= curtime)
+			// timeout (period) has expired
+			if (vExecTimes[i] + vTasks[i]->getPeriod() <= curtime)
 			{
-				if ((mostPrior < 0 || vTasks[i]->getPriority() < mostPrior))
+				// it is found more important (priority) task
+				if (vTasks[i]->getPriority() > mostPrior)
 				{
 					vNumberTask.clear();
 					vNumberTask.push_back(i);
 					mostPrior = vTasks[i]->getPriority();
-				}
+				} // the same important (priority) task
 				else if (vTasks[i]->getPriority() == mostPrior)
 				{
 					vNumberTask.push_back(i);
@@ -92,14 +100,20 @@ void System::printSheduling()
 			++curtime;
 			continue;
 		}
-		int chosenTask = rand() % vNumberTask.size();
+
+		int chosenTask = vNumberTask.size() == 1 ? vNumberTask[0] : rand() % vNumberTask.size();
+		// remember time of execute starting
 		vExecTimes[chosenTask] = curtime;
+		// time is moving to end of executing task
 		curtime += vTasks[chosenTask]->getDuration();
-		vTasks[chosenTask]->printXML(cout, vExecTimes[chosenTask]);
+		// printing executing task
+		vTasks[chosenTask]->printXML(out, vExecTimes[chosenTask]);
 	}
 }
 
 // ==================== End of class System ====================
+
+
 
 // ==================== class ErrorParser ====================
 

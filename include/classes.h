@@ -38,7 +38,7 @@ class System
 	vector<Task *> vTasks;
 public:
 	System(const int time, vector<Task *> & v);
-	void printSheduling();
+	void printSheduling(ostream & out);
 	~System();
 };
 
