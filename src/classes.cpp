@@ -67,22 +67,32 @@ void System::printSheduling()
 	while (curtime < runtime)
 	{
 		int mostPrior = -1;
-		int nTask = -1;
+		vector<int> vNumberTask;
 		for (unsigned i = 0; i < vTasks.size(); ++i)
+		{
 			if (vExecTimes[i] < 0 || vTasks[i]->getPeriod() + vExecTimes[i] <= curtime)
+			{
 				if ((mostPrior < 0 || vTasks[i]->getPriority() < mostPrior))
 				{
-					nTask = i;
+					vNumberTask.clear();
+					vNumberTask.push_back(i);
 					mostPrior = vTasks[i]->getPriority();
 				}
-		if (nTask >= 0)
+				else if (vTasks[i]->getPriority() == mostPrior)
+				{
+					vNumberTask.push_back(i);
+				}
+			}
+		}
+		if (vNumberTask.empty())
 		{
-			vExecTimes[nTask] = curtime;
-			curtime += vTasks[nTask]->getDuration();
-			vTasks[nTask]->printXML(cout, vExecTimes[nTask]);
+			++curtime;
 			continue;
 		}
-		++curtime;
+		int chosenTask = static_cast<unsigned>(random) % vNumberTask.size();
+		vExecTimes[chosenTask] = curtime;
+		curtime += vTasks[chosenTask]->getDuration();
+		vTasks[chosenTask]->printXML(cout, vExecTimes[chosenTask]);
 	}
 }
 
