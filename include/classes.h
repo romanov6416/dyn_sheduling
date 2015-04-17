@@ -10,38 +10,11 @@
 
 #include <vector>
 #include <string>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 
-struct ErrorParser
-{
-	string name;
-	int line;
-	int pos;
-	char symbol;
-public:
-	ErrorParser(const string & namefile, const int l, const int p, const char c);
-	void print();
-};
-
-class ParserXML
-{
-	string name;
-	ifstream file;
-	int line;
-	int pos;
-
-	bool get(char & c);
-	void error(const char c);
-	bool isPhrase(const string & w);
-	bool isLetter(const char & symbol);
-	bool getNumber(int & number);
-	bool getChar(char & symbol);
-	Task * getTask();
-public:
-	ParserXML(const string & namefile);
-	System * analyze();
-};
 
 class Task
 {
@@ -65,7 +38,43 @@ class System
 	vector<Task *> vTasks;
 public:
 	System(const int time, vector<Task *> & v);
-	bool analyze(const string & namefile);
+	void printSheduling();
 	~System();
 };
+
+struct ErrorParser
+{
+	string name;
+	int line;
+	int pos;
+	char symbol;
+public:
+	ErrorParser(const string & namefile,
+			const int l,
+			const int p,
+			const char c);
+	void print();
+};
+
+class ParserXML
+{
+	string name;
+	ifstream file;
+	int line;
+	int pos;
+
+	bool get(char & c);
+	void error(const char c);
+	void isPhrase(const string & w);
+	void isLetter(const char & symbol);
+	void getNumber(int & number);
+	void getChar(char & symbol);
+	void getName(string & name);
+	Task * getTask();
+public:
+	ParserXML(const string & namefile);
+	System * analyze();
+};
+
+
 #endif /* CLASSES_H_ */

@@ -14,7 +14,7 @@
 
 
 // ==================== class Task ====================
-Task::Task(const string & s, const int p, const int d) : name(s), period(p), duration(d), priority(0)
+Task::Task(const string & s, const int p, const int d) : name(s), period(p), duration(d), priority(p)
 {}
 
 const string & Task::getName()
@@ -44,7 +44,7 @@ void Task::setPriority(const int p)
 
 void Task::printXML(ostream & out, const int time)
 {
-	out << "<start name=" << name << " time=" << time << '>';
+	out << "<start name=" << name << " time=" << time << '>' << endl;
 }
 
 // ==================== End of class Task ====================
@@ -52,22 +52,64 @@ void Task::printXML(ostream & out, const int time)
 
 // ==================== class System ====================
 
-bool System::analyze(const string & namefile)
+System::System(const int time, vector<Task *> & v) :
+	runtime(time), vTasks(v)
+{}
+
+void System::printSheduling()
 {
-	ParserXML parser(namefile);
-	if (!parser.analyze(*this)) {
-		cerr << "Error: can't read file \"" << namefile << "\"" << endl;
-		return false;
+	if (vTasks.size() == 0)
+		return;
+	vector<int> vExecTimes(vTasks.size());
+	int curtime = 0;
+	for (unsigned i = 0; i < vExecTimes.size(); ++i)
+		vExecTimes[i] = -1;
+	while (curtime < runtime)
+	{
+		int mostPrior = -1;
+		int nTask = -1;
+		for (unsigned i = 0; i < vTasks.size(); ++i)
+			if (vExecTimes[i] < 0 || vTasks[i]->getPeriod() + vExecTimes[i] <= curtime)
+				if ((mostPrior < 0 || vTasks[i]->getPriority() < mostPrior))
+				{
+					nTask = i;
+					mostPrior = vTasks[i]->getPriority();
+				}
+		if (nTask >= 0)
+		{
+			vExecTimes[nTask] = curtime;
+			curtime += vTasks[nTask]->getDuration();
+			vTasks[nTask]->printXML(cout, vExecTimes[nTask]);
+			continue;
+		}
+		++curtime;
 	}
-	return true;
 }
 
 // ==================== End of class System ====================
 
+// ==================== class ErrorParser ====================
+
+ErrorParser::ErrorParser(const string & namefile,
+		const int l, const int p, const char c) :
+				name(namefile), line(l), pos(p), symbol(c)
+
+{}
+
+void ErrorParser::print()
+{
+	cerr << "Error: in file \"" << name <<
+			"\" in line " << line <<
+			" in position " << pos <<
+			" unexepected symbol \'" << symbol << '\'' <<
+			endl;
+}
+
+// ==================== End of class ErrorParser ====================
 
 // ==================== class ParserXML ====================
 
-ParserXML::ParserXML(const string & namefile) : name(namefile), file(name), line(1), pos(1)
+ParserXML::ParserXML(const string & namefile) : name(namefile), file(namefile.c_str()), line(1), pos(1)
 {}
 
 void ParserXML::error(const char c)
@@ -79,7 +121,7 @@ void ParserXML::error(const char c)
 
 bool ParserXML::get(char & c)
 {
-	bool happy_read = file.get(c);
+	bool happy_read = file.get(c); //cout << static_cast<int>(c);
 	if (c == '\n')
 	{
 		++line;
@@ -92,22 +134,18 @@ bool ParserXML::get(char & c)
 
 System * ParserXML::analyze()
 {
+	if (!file.is_open())
+	{
+		cerr << "Error: can't open file \"" << name << '\"' << endl;
+		return nullptr;
+	}
+	int runtime;
+	vector<Task*> vTasks;
 	try
 	{
-		if (!file.is_open())
-		{
-			cerr << "Error: can't open file \"" << name << "\"" << endl;
-			return nullptr;
-		}
 		// check first line in input file
-		int runtime;
-		vector<Task*> vTasks;
-		if (!isPhrase("<system runtime="))
-			return nullptr;
-		if (!getNumber(runtime))
-			return nullptr;
-		if (!isPhrase(">\n"))
-			return nullptr;
+		isPhrase("<system runtime="); getNumber(runtime); isPhrase(">\n");
+		// check task line in input file
 		while (true)
 			vTasks.push_back(getTask());
 	}
@@ -115,73 +153,92 @@ System * ParserXML::analyze()
 	{
 		if (!(err.symbol == '/' && err.line != 1 && err.pos == 2))
 		{
+			for (unsigned i = 0; i < vTasks.size(); ++i)
+				delete vTasks[i];
 			err.print();
-			return false;
+			return nullptr;
 		}
 	}
 	try
 	{
-		if (!isPhrase("</system>\n"))
-			return false;
+		// "</" was reading, so we need read remain symbols
+		isPhrase("system>\n");
+		// check end of file
+		char c;
 		if (get(c))
 			error(c);
 	}
 	catch(ErrorParser & err)
 	{
 		err.print();
-		return false;
+		return nullptr;
 	}
-	return true;
+	return new System(runtime, vTasks);
 }
 
-bool ParserXML::isPhrase(const string & w)
+void ParserXML::isPhrase(const string & w)
 {
-	char c;
 	for (unsigned int i = 0; i < w.size(); ++i)
-	{
-		if (!isLetter(w[i]))
-			return false;
-	}
-	return true;
+		isLetter(w[i]);
 }
 
-bool ParserXML::isLetter(const char & symbol)
+void ParserXML::isLetter(const char & symbol)
 {
 	char c;
-	if (!file.get(c) || symbol != c)
-	{
+	if (!get(c) || symbol != c)
 		error(c);
-		return false;
-	}
-	return true;
 }
 
-bool ParserXML::getNumber(int & number)
+void ParserXML::getNumber(int & number)
 {
 	string s;
 	char c;
-	while (file.get(c) && isdigit(c))
+	while (get(c) && isdigit(c))
 		s += c;
 	if (!file.eof())
 		file.unget();
 	number = strtol(s.c_str(), nullptr,10);
-	return s.empty();
+	if (s.empty())
+		error(c);
 }
 
-bool ParserXML::getChar(char & symbol)
+void ParserXML::getChar(char & symbol)
 {
 	char c;
-	if (!file.get(c))
-	{
+	if (!get(c))
 		error(c);
-		return false;
-	}
 	symbol = c;
-	return true;
+}
+
+void ParserXML::getName(string & name)
+{
+	char c;
+	getChar(c);
+	if (!isalpha(c))
+		error(c);
+	name = c;
+	try
+	{
+		getChar(c);
+		while (isalpha(c) || isdigit(c))
+		{
+			name += c;
+			getChar(c);
+		}
+	}
+	catch(...)
+	{}
+	if (!file.eof())
+		file.unget();
 }
 
 Task * ParserXML::getTask()
 {
 	string name;
-	if (!)
+	int period, duration;
+	isPhrase("<task name=\""); getName(name);
+	isPhrase("\" period="); getNumber(period);
+	isPhrase(" duration="); getNumber(duration);
+	isPhrase(">\n");
+	return new Task(name, period, duration);
 }
