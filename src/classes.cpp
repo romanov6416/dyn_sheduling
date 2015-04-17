@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <stdlib.h>
+#include <random>
 
 
 // ==================== class Task ====================
@@ -89,7 +90,7 @@ void System::printSheduling()
 			++curtime;
 			continue;
 		}
-		int chosenTask = static_cast<unsigned>(random) % vNumberTask.size();
+		int chosenTask = rand() % vNumberTask.size();
 		vExecTimes[chosenTask] = curtime;
 		curtime += vTasks[chosenTask]->getDuration();
 		vTasks[chosenTask]->printXML(cout, vExecTimes[chosenTask]);
