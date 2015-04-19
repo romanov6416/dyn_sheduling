@@ -48,7 +48,7 @@ void Task::setPriority(const int p)
 
 void Task::printXML(ostream & out, const int time)
 {
-	out << "<start name=" << name << " time=" << time << '>' << endl;
+	out << "<start name=\"" << name << "\" time=\"" << time <<"\"/>" << endl;
 }
 
 // ==================== End of class Task ====================
@@ -74,6 +74,7 @@ void System::printSheduling(ostream & out)
 		vExecTimes[i] = (-1) * vTasks[i]->getPeriod();
 	// random for choosing one of set the most important tasks
 	srand(time(NULL));
+	out << "<sheduling runtime=\"2000\">" << endl;
 	while (curtime < runtime)
 	{
 		int mostPrior = -1;
@@ -110,6 +111,7 @@ void System::printSheduling(ostream & out)
 		// printing executing task
 		vTasks[chosenTask]->printXML(out, vExecTimes[chosenTask]);
 	}
+	out << "</sheduling>" << endl;
 }
 
 System::~System()
