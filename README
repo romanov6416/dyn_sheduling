@@ -4,7 +4,10 @@ Example: (dir - root of project)
 cd Debug
 ./dyn_sheduling ../input.txt ../output.txt
 
-Language	c++11
+Language		c++11
 IDE			eclipse 3.8
+OS			Ubuntu 14.04
+
+Program uses library 'tinyxml2'
 
 Author: Romanov Andrey, 321 group
