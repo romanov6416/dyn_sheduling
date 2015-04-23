@@ -17,8 +17,6 @@ string to_string(const int i)
 	return string(str);
 }
 
-
-
 int main(int argc, char *argv[])
 {
 	if (argc != 3)
