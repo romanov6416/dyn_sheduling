@@ -36,9 +36,11 @@ class System
 {
 	int runtime;
 	vector<Task *> vTasks;
+	static System * error(const string & err = "unknown error");
 public:
 	System(const int time, vector<Task *> & v);
 	void printSheduling(ostream & out);
+	static System * getSystemFromXML(const string & namefile);
 	~System();
 };
 

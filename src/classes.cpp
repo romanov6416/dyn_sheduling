@@ -6,6 +6,7 @@
  */
 
 #include "classes.h"
+#include "tinyxml2.h"
 
 #include <vector>
 #include <fstream>
@@ -61,6 +62,12 @@ System::System(const int time, vector<Task *> & v) :
 	runtime(time), vTasks(v)
 {}
 
+System * System::error(const string & err)
+{
+	cerr << "Error: " << err << endl;
+	return nullptr;
+}
+
 void System::printSheduling(ostream & out)
 {
 	//
@@ -112,6 +119,77 @@ void System::printSheduling(ostream & out)
 		vTasks[chosenTask]->printXML(out, vExecTimes[chosenTask]);
 	}
 	out << "</sheduling>" << endl;
+}
+
+System * System::getSystemFromXML(const string & namefile)
+{
+	tinyxml2::XMLDocument fileXML;
+	// if any error during parsing ...
+	if (fileXML.LoadFile(namefile.c_str()) != 0)
+		return error("can\'t open or parsing file");
+	// read system
+	auto sysElem = fileXML.FirstChildElement();
+	if (sysElem == nullptr || string(sysElem->Name()) != string("system"))
+		return error("can\'t first element is not \"system\"");
+	// read runtime
+	auto attr = sysElem->FirstAttribute();
+	if (attr == nullptr || string(attr->Name()) != string("runtime"))
+		return error("in element \"system\" first attribute is not \"runtime\"");
+	int runtime = attr->IntValue();
+
+	// read all tasks
+	vector<Task*> vTasks;
+	auto task = sysElem->FirstChildElement();
+	try
+	{
+		while (task != nullptr)
+		{
+			// check task
+			if (string(task->Name()) != string("task"))
+				throw string("in element \"system\" child #") + to_string(vTasks.size()+1) + string(" is not \"task\"");
+
+			// read attribute name
+			auto attr = task->FirstAttribute();
+			if (attr == nullptr || string(attr->Name()) != string("name"))
+				throw string("in element \"system\" in child #") + to_string(vTasks.size()+1) +
+						string(" with name \"task\" first attribute is not \"name\"");
+			string name = attr->Value();
+
+			// read attribute period
+			attr = attr->Next();
+			if (attr == nullptr || string(attr->Name()) != string("period"))
+				throw string("in element \"system\" in child #") + to_string(vTasks.size()+1) +
+						string(" with name \"task\" second attribute is not \"period\"");
+			int period = attr->IntValue();
+
+			// read attribute duration
+			attr = attr->Next();
+			if (attr == nullptr || string(attr->Name()) != string("duration"))
+				throw string("in element \"system\" in child #") + to_string(vTasks.size()+1) +
+						string(" with name \"task\" third attribute is not \"duration\"");
+			int duration = attr->IntValue();
+
+			// if there are more than 3 attributes
+			if (attr->Next() != nullptr)
+				throw string("in element \"system\" child #") + to_string(vTasks.size()+1) +
+						string(" with name \"task\" has more than three attributes");
+
+			// add new task
+			vTasks.push_back(new Task(name, period, duration));
+
+			// move to next task
+			task = task->NextSiblingElement();
+		}
+	}
+	catch(const string & err)
+	{
+		for(unsigned i = 0; i < vTasks.size(); ++i)
+			delete vTasks[i];
+		return error(err);
+	}
+	if (sysElem->NextSiblingElement() != nullptr)
+		return error("there are more than one root element");
+	return new System(runtime, vTasks);
 }
 
 System::~System()
